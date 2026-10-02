@@ -1,44 +1,29 @@
-import pyodbc
+"""Caisse en ligne de commande : enregistre une vente de façon atomique."""
+from inventaire import InventaireError, vendre
 
-# Connexion à la base de données
-conn = pyodbc.connect(
-    'DRIVER={ODBC Driver 17 for SQL Server};'
-    'SERVER=localhost\\SQLEXPRESS;'  
-    'DATABASE=BaseInventaire;'
-    'Trusted_Connection=yes;'
-)
 
-cursor = conn.cursor()
+def lire_entier(message):
+    while True:
+        try:
+            valeur = int(input(message))
+            if valeur > 0:
+                return valeur
+        except ValueError:
+            pass
+        print("Veuillez saisir un nombre entier strictement positif.")
 
-try:
-    # 1. Demander à l'utilisateur l'ID du produit et la quantité
-    id_produit = int(input("Product ID: "))
-    quantite_vendue = int(input("Quantity to sell: "))
 
-    # 2. Vérifier le stock actuel
-    cursor.execute("""
-        SELECT COALESCE(SUM(quantite_variation), 0)
-        FROM mouvements_stock
-        WHERE id_produit = ?
-    """, (id_produit,))
-    stock_actuel = cursor.fetchone()[0]
+def main():
+    id_produit = lire_entier("ID du produit : ")
+    quantite = lire_entier("Quantité à vendre : ")
+    try:
+        nouveau_stock = vendre(id_produit, quantite)
+        print(f"Vente enregistrée. Nouveau stock : {nouveau_stock}")
+    except InventaireError as e:
+        print(f"Vente refusée : {e}")
+    except Exception as e:
+        print(f"Erreur inattendue : {e}")
 
-    if stock_actuel < quantite_vendue:
-        print(f"Insufficient stock! Current stock: {stock_actuel}")
-    else:
-        # 3. Insérer le mouvement de vente
-        cursor.execute("""
-            INSERT INTO mouvements_stock (id_produit, quantite_variation, type_mouvement)
-            VALUES (?, ?, 'VENTE')
-        """, (id_produit, -quantite_vendue))
 
-        conn.commit()
-        print(f"Sale successful. New stock: {stock_actuel - quantite_vendue}")
-
-except Exception as e:
-    conn.rollback()
-    print(f"Error: {e}")
-
-finally:
-    cursor.close()
-    conn.close()
+if __name__ == "__main__":
+    main()
