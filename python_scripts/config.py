@@ -14,7 +14,7 @@ except ImportError:  # python-dotenv est optionnel
 # --- Base de données (authentification Windows) ---
 DB_DRIVER = os.getenv("DB_DRIVER", "ODBC Driver 17 for SQL Server")
 DB_SERVER = os.getenv("DB_SERVER", r"localhost\SQLEXPRESS")
-DB_NAME = os.getenv("DB_NAME", "BaseInventaire")
+DB_NAME = os.getenv("DB_NAME", "BaseInventaire1")
 
 CONN_STR = (
     f"DRIVER={{{DB_DRIVER}}};"
